@@ -1,8 +1,20 @@
 <?php
-$host = "localhost";
-$username = "root";
-$password = "";
-$dbname = "timetable_db";
+if ($_SERVER['HTTP_HOST'] == 'timegrid.offerplant.com') {
+    // Live Server Config (Hostinger)
+    $host = "localhost";
+    $username = "u960515621_timegrid";
+    $password = "@Time_2001";
+    $dbname = "u960515621_timegrid";
+    define('BASE_URL', '');
+}
+else {
+    // Local Development Config
+    $host = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "timetable_db";
+    define('BASE_URL', '/timetable');
+}
 
 session_start();
 $org_id = $_SESSION['org_id'] ?? 0;
@@ -17,13 +29,15 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Create database if not exists
-$sql = "CREATE DATABASE IF NOT EXISTS $dbname";
-if (mysqli_query($conn, $sql)) {
-    mysqli_select_db($conn, $dbname);
+// Create database if not exists (Only for Local)
+if ($_SERVER['HTTP_HOST'] != 'timegrid.offerplant.com') {
+    $sql = "CREATE DATABASE IF NOT EXISTS $dbname";
+    mysqli_query($conn, $sql);
 }
-else {
-    die("Error creating database: " . mysqli_error($conn));
+
+// Select the database
+if (!mysqli_select_db($conn, $dbname)) {
+    die("Database selection failed: " . mysqli_error($conn));
 }
 
 // Function to safely execute queries
@@ -64,5 +78,5 @@ if (mysqli_num_rows($table_check) == 0) {
     }
 }
 
-define('BASE_URL', '/timetable');
+// BASE_URL is now defined in the environment detection block above.
 ?>
