@@ -136,50 +136,56 @@ require_once '../includes/header.php';
 
 <div class="card fade-in" style="animation-delay: 0.1s;">
     <h2 class="card-title">Assign Subjects & Classes</h2>
-    <div class="alert" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.85rem; margin-bottom: 1.5rem;">
-        <i class="fas fa-info-circle"></i> <strong>Tip:</strong> Subjects are filtered based on the <strong>Class-Subject Mapping</strong> you defined in Step 2.
+    <div class="alert" style="background: #f0f7ff; color: #0369a1; border: 1px solid #e0f2fe; font-size: 0.85rem; margin-bottom: 2rem; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--primary);">
+        <i class="fas fa-lightbulb" style="font-size: 1.2rem; color: var(--primary);"></i>
+        <span><strong>Pro Tip:</strong> Subjects are filtered based on the <b>Class-Subject Mapping</b> you defined in Step 2.</span>
     </div>
-    <form method="POST" id="assignmentForm" style="display: grid; grid-template-columns: 2fr 2fr 2fr 120px; gap: 1rem; align-items: flex-end; margin-bottom: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <form method="POST" id="assignmentForm" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
         <div class="form-group" style="margin-bottom: 0;">
-            <label>Select Teacher</label>
-            <select name="teacher_id" required>
-                <?php mysqli_data_seek($teachers, 0);
-while ($row = mysqli_fetch_assoc($teachers)): ?>
-                <option value="<?php echo $row['id']; ?>"><?php echo $row['name']; ?></option>
-                <?php
-endwhile; ?>
-            </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 0; grid-column: span 1;">
-            <label>Select Classes (Multiple)</label>
-            <div id="class_checkbox_container" style="height: 160px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
-                <label style="display: flex; align-items: center; gap: 10px; padding: 6px; border-bottom: 1px solid #f1f5f9; margin-bottom: 6px; cursor: pointer; font-weight: 700; color: var(--primary);">
+            <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 700; color: var(--text-main);"><i class="fas fa-graduation-cap"></i> Select Classes (Multiple)</span>
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--primary); cursor: pointer; display: flex; align-items: center; gap: 5px; background: white; padding: 4px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <input type="checkbox" id="check_all_classes"> Select All
                 </label>
+            </label>
+            <div id="class_checkbox_container" style="max-height: 150px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
                 <?php mysqli_data_seek($classes, 0);
 while ($row = mysqli_fetch_assoc($classes)): ?>
-                <label style="display: flex; align-items: center; gap: 10px; padding: 4px 6px; cursor: pointer; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                <label style="display: flex; align-items: center; gap: 8px; padding: 8px 15px; cursor: pointer; border-radius: 8px; border: 1px solid #f1f5f9; transition: all 0.2s; background: #f8fafc; min-width: 90px; user-select: none;" class="class-card-label">
                     <input type="checkbox" name="class_ids[]" value="<?php echo $row['id']; ?>" class="class-checkbox">
-                    <span style="font-size: 0.9rem;"><?php echo $row['class_name']; ?></span>
+                    <span style="font-size: 0.9rem; font-weight: 600;"><?php echo $row['class_name']; ?></span>
                 </label>
                 <?php
 endwhile; ?>
             </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label>Select Subject</label>
-            <select name="subject_id" id="subject_selector" required>
-                <option value="">-- Select Classes First --</option>
-                <?php mysqli_data_seek($subjects, 0);
-while ($row = mysqli_fetch_assoc($subjects)): ?>
-                <option value="<?php echo $row['id']; ?>" data-all="1"><?php echo $row['subject_name']; ?></option>
-                <?php
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 150px; gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-weight: 700; color: var(--text-main);"><i class="fas fa-chalkboard-teacher"></i> Select Teacher</label>
+                <select name="teacher_id" required style="height: 45px; border-radius: 8px;">
+                    <?php mysqli_data_seek($teachers, 0);
+while ($row = mysqli_fetch_assoc($teachers)): ?>
+                    <option value="<?php echo $row['id']; ?>"><?php echo $row['name']; ?></option>
+                    <?php
 endwhile; ?>
-            </select>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-weight: 700; color: var(--text-main);"><i class="fas fa-book"></i> Select Subject</label>
+                <select name="subject_id" id="subject_selector" required style="height: 45px; border-radius: 8px;">
+                    <option value="">-- Select Classes First --</option>
+                    <?php mysqli_data_seek($subjects, 0);
+while ($row = mysqli_fetch_assoc($subjects)): ?>
+                    <option value="<?php echo $row['id']; ?>" data-all="1"><?php echo $row['subject_name']; ?></option>
+                    <?php
+endwhile; ?>
+                </select>
+            </div>
+            <button type="submit" name="add_assignment" class="btn btn-primary" style="height: 45px; border-radius: 8px; font-weight: 700;">
+                <i class="fas fa-link"></i> Assign
+            </button>
         </div>
-        <button type="submit" name="add_assignment" class="btn btn-primary" style="height: 44px;">
-            <i class="fas fa-link"></i> Assign
-        </button>
     </form>
 
     <script>
@@ -232,11 +238,31 @@ endwhile; ?>
                 // Update Check All state
                 const allChecked = Array.from(classCheckboxes).every(c => c.checked);
                 checkAllClasses.checked = allChecked;
+
+                // Visual highlight update
+                const parent = cb.closest('.class-card-label');
+                if(cb.checked) {
+                    parent.style.borderColor = 'var(--primary)';
+                    parent.style.background = '#eff6ff';
+                } else {
+                    parent.style.borderColor = '#f1f5f9';
+                    parent.style.background = '#f8fafc';
+                }
             });
         });
 
         checkAllClasses.addEventListener('change', function() {
-            classCheckboxes.forEach(cb => cb.checked = this.checked);
+            classCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+                const parent = cb.closest('.class-card-label');
+                if(this.checked) {
+                    parent.style.borderColor = 'var(--primary)';
+                    parent.style.background = '#eff6ff';
+                } else {
+                    parent.style.borderColor = '#f1f5f9';
+                    parent.style.background = '#f8fafc';
+                }
+            });
             updateSubjects();
         });
 

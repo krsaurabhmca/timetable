@@ -2,14 +2,13 @@
 require_once '../config.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $working_days = implode(',', $_POST['working_days']);
+    $working_days = isset($_POST['working_days']) ? implode(',', $_POST['working_days']) : '';
     $periods_per_day = db_escape($_POST['periods_per_day']);
     $saturday_periods = db_escape($_POST['saturday_periods'] ?? 4);
     $period_duration = db_escape($_POST['period_duration']);
     $max_cont = db_escape($_POST['max_continuous_periods'] ?? 2);
     $sched_type = db_escape($_POST['schedule_type'] ?? 'different');
     $restrict_ct = db_escape($_POST['restrict_class_teacher_1st_period'] ?? 'no');
-
     $lunch_after = db_escape($_POST['lunch_after_period'] ?? 0);
 
     db_query("UPDATE settings SET value = '$working_days' WHERE `key` = 'working_days'");
@@ -59,91 +58,123 @@ require_once '../includes/header.php';
     </div>
 </div>
 
-<div class="card fade-in">
-    <h2 class="card-title">Step 1: General Settings</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label>Working Days</label>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <?php
+<div class="fade-in">
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 class="card-title" style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-cog" style="color: var(--primary);"></i> Step 1: Configuration
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;">Define the basic structure of your school week.</p>
+        
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                
+                <!-- Working Days Section -->
+                <div class="card" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i> Academic Week
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px;">
+                        <?php
 $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 foreach ($days as $day):
+    $checked = in_array($day, $current_days);
 ?>
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal;">
-                    <input type="checkbox" name="working_days[]" value="<?php echo $day; ?>" 
-                    <?php echo in_array($day, $current_days) ? 'checked' : ''; ?>> 
-                    <?php echo $day; ?>
-                </label>
-                <?php
+                        <label style="display: flex; align-items: center; gap: 6px; padding: 8px; border-radius: 6px; border: 1px solid <?php echo $checked ? 'var(--primary)' : '#e2e8f0'; ?>; background: <?php echo $checked ? '#eff6ff' : 'white'; ?>; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
+                            <input type="checkbox" name="working_days[]" value="<?php echo $day; ?>" 
+                            <?php echo $checked ? 'checked' : ''; ?> style="accent-color: var(--primary);"> 
+                            <?php echo $day; ?>
+                        </label>
+                        <?php
 endforeach; ?>
-            </div>
-        </div>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label for="periods_per_day">Number of Periods per Day (Default)</label>
-            <input type="number" name="periods_per_day" id="periods_per_day" value="<?php echo $settings['periods_per_day']; ?>" min="1" max="15">
-        </div>
-
-        <div class="form-group" id="saturday_periods_group" <?php echo !in_array('Saturday', $current_days) ? 'style="display:none;"' : ''; ?>>
-            <label for="saturday_periods">Number of Periods on Saturday</label>
-            <input type="number" name="saturday_periods" id="saturday_periods" value="<?php echo $settings['saturday_periods'] ?? 4; ?>" min="1" max="15">
-        </div>
-
-        <div class="form-group">
-            <label for="period_duration">Period Duration (Minutes)</label>
-            <input type="number" name="period_duration" id="period_duration" value="<?php echo $settings['period_duration']; ?>" min="15" max="120">
-        </div>
-
-        <div class="form-group">
-            <label for="max_continuous_periods">Max Continuous Periods for a Subject</label>
-            <input type="number" name="max_continuous_periods" id="max_continuous_periods" value="<?php echo $settings['max_continuous_periods'] ?? 2; ?>" min="1" max="5">
-            <small style="color: var(--text-muted);">Limits how many times a subject can repeat back-to-back in a class.</small>
-        </div>
-
-        <div class="form-group">
-            <label for="schedule_type">Routine Type</label>
-            <select name="schedule_type" id="schedule_type">
-                <option value="different" <?php echo($settings['schedule_type'] ?? 'different') == 'different' ? 'selected' : ''; ?>>Different Schedule every day</option>
-                <option value="same" <?php echo($settings['schedule_type'] ?? '') == 'same' ? 'selected' : ''; ?>>Same Schedule every day</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input type="checkbox" name="restrict_class_teacher_1st_period" value="yes" <?php echo($settings['restrict_class_teacher_1st_period'] ?? 'no') == 'yes' ? 'checked' : ''; ?>>
-                Restrict 1st Period to Class Teacher
-            </label>
-            <small style="color: var(--text-muted); display: block; margin-top: 4px;">If enabled, the first period of every day will be assigned to the teacher who is the "Class Teacher" of that class.</small>
-        </div>
-
-        <div class="form-group">
-            <label for="lunch_after_period">Lunch Break After Period</label>
-            <select name="lunch_after_period" id="lunch_after_period">
-                <option value="0">No Lunch Break</option>
-                <?php for ($i = 1; $i <= 10; $i++): ?>
-                    <option value="<?php echo $i; ?>" <?php echo($settings['lunch_after_period'] ?? '') == $i ? 'selected' : ''; ?>>After Period <?php echo $i; ?></option>
-                <?php
+                <!-- Daily Schedule Section -->
+                <div class="card" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-clock" style="color: var(--primary);"></i> Day Structure
+                    </h3>
+                    <div style="display: grid; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Standard Periods/Day</label>
+                            <input type="number" name="periods_per_day" value="<?php echo $settings['periods_per_day']; ?>" min="1" max="15" style="width: 70px; padding: 6px;">
+                        </div>
+                        <div id="sat_group" style="display: <?php echo in_array('Saturday', $current_days) ? 'flex' : 'none'; ?>; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Periods (Saturday)</label>
+                            <input type="number" name="saturday_periods" value="<?php echo $settings['saturday_periods'] ?? 4; ?>" min="1" max="15" style="width: 70px; padding: 6px;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Duration (Mins)</label>
+                            <input type="number" name="period_duration" value="<?php echo $settings['period_duration']; ?>" min="15" max="120" style="width: 70px; padding: 6px;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Lunch After Period</label>
+                            <select name="lunch_after_period" style="width: 120px; padding: 6px;">
+                                <option value="0">None</option>
+                                <?php for ($i = 1; $i <= 10; $i++): ?>
+                                    <option value="<?php echo $i; ?>" <?php echo($settings['lunch_after_period'] ?? '') == $i ? 'selected' : ''; ?>>After P<?php echo $i; ?></option>
+                                <?php
 endfor; ?>
-            </select>
-            <small style="color: var(--text-muted);">A "LUNCH" slot will be inserted into the routine after this period.</small>
-        </div>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-        <script>
-            document.querySelectorAll('input[name="working_days[]"]').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    const satChecked = Array.from(document.querySelectorAll('input[name="working_days[]"]:checked'))
-                        .some(i => i.value === 'Saturday');
-                    document.getElementById('saturday_periods_group').style.display = satChecked ? 'block' : 'none';
-                });
-            });
-        </script>
+                <!-- Logic Controls Section -->
+                <div class="card" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-brain" style="color: var(--primary);"></i> Generation Logic
+                    </h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <label style="font-size: 0.8rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Routine Consistency</label>
+                            <select name="schedule_type" style="width: 100%; padding: 8px;">
+                                <option value="different" <?php echo($settings['schedule_type'] ?? 'different') == 'different' ? 'selected' : ''; ?>>Different every day</option>
+                                <option value="same" <?php echo($settings['schedule_type'] ?? '') == 'same' ? 'selected' : ''; ?>>Uniform (Same every day)</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Max Continuous</label>
+                            <input type="number" name="max_continuous_periods" value="<?php echo $settings['max_continuous_periods'] ?? 2; ?>" min="1" max="5" style="width: 70px; padding: 6px;">
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox" name="restrict_class_teacher_1st_period" value="yes" <?php echo($settings['restrict_class_teacher_1st_period'] ?? 'no') == 'yes' ? 'checked' : ''; ?> style="accent-color: var(--primary);">
+                            <span>Force Class Teacher in 1st Period</span>
+                        </label>
+                    </div>
+                </div>
 
-        <div style="display: flex; justify-content: flex-end;">
-            <button type="submit" class="btn btn-primary">
-                Save & Next <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-    </form>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 30px; font-weight: 700; border-radius: 12px;">
+                    Save Settings & Continue <i class="fas fa-arrow-right" style="margin-left: 10px;"></i>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+    document.querySelectorAll('input[name="working_days[]"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            // Visual feedback
+            const label = this.closest('label');
+            if(this.checked) {
+                label.style.borderColor = 'var(--primary)';
+                label.style.background = '#eff6ff';
+            } else {
+                label.style.borderColor = '#e2e8f0';
+                label.style.background = 'white';
+            }
+
+            // Toggle Saturday periods
+            const isSat = this.value === 'Saturday';
+            const satChecked = Array.from(document.querySelectorAll('input[name="working_days[]"]:checked'))
+                .some(i => i.value === 'Saturday');
+            document.getElementById('sat_group').style.display = satChecked ? 'flex' : 'none';
+        });
+    });
+</script>
 
 <?php require_once '../includes/footer.php'; ?>

@@ -10,11 +10,16 @@ $working_days = explode(',', $settings['working_days']);
 $periods_count = (int)$settings['periods_per_day'];
 $sat_periods = (int)($settings['saturday_periods'] ?? 4);
 
-$classes_res = db_query("SELECT * FROM classes ORDER BY class_name");
+$classes_data = db_query("SELECT c.*, t.name as class_teacher_name, t.id as class_teacher_id 
+                         FROM classes c 
+                         LEFT JOIN teachers t ON t.is_class_teacher_of = c.id 
+                         ORDER BY c.class_name");
 $classes = [];
-while ($row = mysqli_fetch_assoc($classes_res))
+while ($row = mysqli_fetch_assoc($classes_data)) {
     $classes[] = $row;
+}
 
+$selected_day = $_GET['day'] ?? ($working_days[0] ?? 'Monday');
 $today_date = date('Y-m-d');
 $today_day = date('l');
 $adjustments = [];
@@ -28,7 +33,7 @@ if ($selected_day == $today_day) {
     }
 }
 
-$timetable_res = db_query("SELECT t.*, s.subject_name, tea.name as teacher_name, c.class_name 
+$timetable_res = db_query("SELECT t.*, s.subject_name, s.color, tea.name as teacher_name, c.class_name 
                            FROM timetable t 
                            JOIN subjects s ON t.subject_id = s.id 
                            JOIN teachers tea ON t.teacher_id = tea.id
@@ -39,8 +44,6 @@ $routine = []; // [day][period][class_id] = data
 while ($row = mysqli_fetch_assoc($timetable_res)) {
     $routine[$row['day_of_week']][$row['period_number']][$row['class_id']] = $row;
 }
-
-$selected_day = $_GET['day'] ?? ($working_days[0] ?? 'Monday');
 
 require_once 'includes/header.php';
 ?>
@@ -56,7 +59,7 @@ require_once 'includes/header.php';
                 <?php foreach ($working_days as $day): ?>
                     <a href="?day=<?php echo $day; ?>" 
                        class="btn <?php echo $selected_day == $day ? 'btn-primary' : ''; ?>" 
-                       style="padding: 0.5rem 1rem; border-radius: 6px; <?php echo $selected_day != $day ? 'background:transparent; color: var(--text);' : ''; ?>">
+                       style="padding: 0.5rem 1rem; border-radius: 6px; <?php echo $selected_day != $day ? 'background:transparent; color: var(--text-main);' : ''; ?>">
                        <?php echo $day; ?>
                     </a>
                 <?php
@@ -90,31 +93,48 @@ endfor; ?>
                 <?php foreach ($classes as $class): ?>
                 <tr>
                     <td style="padding: 1rem; background: #f8fafc; font-weight: 600; border: 1px solid var(--border); position: sticky; left: 0; z-index: 5;">
-                        <?php echo $class['class_name']; ?>
+                        <div style="font-size: 1.1rem;"><?php echo $class['class_name']; ?></div>
+                        <?php if ($class['class_teacher_name']): ?>
+                            <div style="font-size: 0.65rem; color: var(--secondary); margin-top: 4px; font-weight: 500;">
+                                <i class="fas fa-id-badge"></i> CT: <?php echo $class['class_teacher_name']; ?>
+                            </div>
+                        <?php
+    endif; ?>
                     </td>
                     <?php for ($p = 1; $p <= $current_day_periods; $p++): ?>
-                        <td style="padding: 0.5rem; border: 1px solid var(--border); min-width: 120px; vertical-align: top;">
+                        <td style="padding: 0.5rem; border: 1px solid var(--border); min-width: 140px; vertical-align: top;">
                             <?php if (isset($routine[$selected_day][$p][$class['id']])):
             $item = $routine[$selected_day][$p][$class['id']];
             $color_idx = ($item['subject_id'] % 8) + 1;
+            $sub_color = !empty($item['color']) ? $item['color'] : "var(--sub-$color_idx-color, #3b82f6)";
+            $is_ct = ($class['class_teacher_id'] == $item['teacher_id']);
+            $proxy_name = $adjustments[$p][$class['id']] ?? null;
 ?>
-                                <div style="background: var(--bg-surface); padding: 8px; border-radius: 6px; border-left: 4px solid var(--sub-<?php echo $color_idx; ?>-color, #3b82f6); box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative;">
-                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text);"><?php echo $item['subject_name']; ?></div>
-                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-                                        <?php if (isset($adjustments[$p][$class['id']])): ?>
-                                            <i class="fas fa-exchange-alt" style="color: var(--success);"></i> 
-                                            <span style="color: var(--success); font-weight: 600;"><?php echo $adjustments[$p][$class['id']]; ?></span>
-                                            <br><small style="text-decoration: line-through; opacity: 0.5;"><?php echo $item['teacher_name']; ?></small>
+                                <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border-left: 4px solid <?php echo $sub_color; ?>; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative;">
+                                    <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);"><?php echo $item['subject_name']; ?></div>
+                                    <div style="font-size: 0.72rem; margin-top: 6px; line-height: 1.4;">
+                                        <?php if ($proxy_name): ?>
+                                            <div style="color: var(--danger); font-weight: 700;">
+                                                <i class="fas fa-user-clock"></i> <?php echo $proxy_name; ?>
+                                                <span style="font-size: 0.6rem; opacity: 0.7; display: block;">Proxy assigned</span>
+                                            </div>
                                         <?php
             else: ?>
-                                            <i class="fas fa-user-tie"></i> <?php echo $item['teacher_name']; ?>
+                                            <div style="color: <?php echo $is_ct ? '#166534' : '#475569'; ?>; font-weight: <?php echo $is_ct ? '700' : '500'; ?>;">
+                                                <i class="fas <?php echo $is_ct ? 'fa-user-graduate' : 'fa-user-tie'; ?>" style="font-size: 0.8rem; width: 14px;"></i> 
+                                                <?php echo $item['teacher_name']; ?>
+                                                <?php if ($is_ct): ?> 
+                                                    <span style="font-size: 0.6rem; background: #dcfce7; padding: 1px 4px; border-radius: 4px; color: #166534;">CT</span>
+                                                <?php
+                endif; ?>
+                                            </div>
                                         <?php
             endif; ?>
                                     </div>
                                 </div>
                             <?php
         else: ?>
-                                <div style="color: #cbd5e1; font-size: 0.75rem; text-align: center; padding: 10px;">Free</div>
+                                <div style="color: #cbd5e1; font-size: 0.75rem; text-align: center; padding: 10px; font-style: italic;">Free</div>
                             <?php
         endif; ?>
                         </td>

@@ -37,7 +37,8 @@ while ($row = mysqli_fetch_assoc($restrictions_res)) {
 $message = "";
 $status = "info";
 
-if (isset($_POST['generate'])) {
+// Support Direct Generation from Dashboard
+if (isset($_GET['direct_gen']) || isset($_POST['generate'])) {
     // Clear existing timetable
     db_query("DELETE FROM timetable WHERE is_adjustment = FALSE");
 
@@ -72,18 +73,10 @@ if (isset($_POST['generate'])) {
     $generation_days = ($sched_type == 'same') ? [$working_days[0]] : $working_days;
 
     // Calculate total slots for threshold
-    $temp_days = ($sched_type == 'same') ? $working_days : $generation_days;
     $total_slots_target = 0;
-    foreach ($temp_days as $d) {
-        $total_slots_target += count($classes) * (($d === 'Saturday') ? $sat_periods : $periods_count);
-    }
-    foreach ($generation_days as $day) {
-        $dp = ($day === 'Saturday') ? $sat_periods : $periods_count;
-        for ($p = 1; $p <= $dp; $p++) {
-            if ($p == $lunch_after)
-                continue;
-            $total_slots_target += count($classes);
-        }
+    foreach ($working_days as $d) {
+        $slots_per_day = ($d === 'Saturday') ? $sat_periods : $periods_count;
+        $total_slots_target += count($classes) * $slots_per_day;
     }
 
     $best_filled_count = 0;
@@ -119,10 +112,6 @@ if (isset($_POST['generate'])) {
 
             // Process periods in random or sequential order? Sequential is better for continuity constraints.
             for ($p = 1; $p <= $day_periods; $p++) {
-                // Skip lunch period
-                if ($p == $lunch_after)
-                    continue;
-
                 foreach ($shuffled_classes as $class) {
                     $cid = $class['id'];
                     $assigned = false;
@@ -154,17 +143,29 @@ if (isset($_POST['generate'])) {
                         shuffle($subject_order);
 
                     foreach ($subject_order as $sid) {
+                        // NEW CONSTRAINT: Prevent same subject on same day (unless continuous)
+                        $is_repeat_today = isset($class_day_subjects[$cid][$sid]);
+                        $is_prev_p = ($is_repeat_today && $class_day_subjects[$cid][$sid] == $p - 1);
+
+                        // If it's a repeat but NOT a continuous period (Double Period), try to avoid it
+                        if ($is_repeat_today && !$is_prev_p) {
+                            // We allow repeats only if we've exhausted other options in later passes
+                            // In early passes/attempts, we strictly force variety
+                            if ($pass < 15) {
+                                continue;
+                            }
+                        }
+
                         // CONSTRAINT: Max Continuous
-                        if (isset($class_day_subjects[$cid][$sid]) && $class_day_subjects[$cid][$sid] == $p - 1) {
+                        if ($is_prev_p) {
                             if (($continuous_count[$cid][$sid] ?? 1) >= $max_cont) {
                                 $current_failure_log['continuous_limit']++;
                                 continue;
                             }
                         }
-                        elseif (isset($class_day_subjects[$cid][$sid])) {
-                            // If it's not continuous, we check if we've already had enough of this subject today
-                            // But we allow it to repeat at least twice a day if needed to fill gaps
-                            if (($continuous_count[$cid][$sid] ?? 1) >= 4) { // Absolute max per day
+                        elseif ($is_repeat_today) {
+                            // Absolute limit for repeats per day even in desperate passes
+                            if (($continuous_count[$cid][$sid] ?? 1) >= 3) {
                                 continue;
                             }
                         }
@@ -307,16 +308,9 @@ if (isset($_POST['generate'])) {
     $total_required = $total_slots_target;
     $filled_count = count($timetable_data);
 
-    // If same schedule, recalculate replicated target
-    if ($sched_type == 'same') {
-        $first_day_dp = ($working_days[0] === 'Saturday') ? $sat_periods : $periods_count;
-        $teachable_per_day = 0;
-        for ($p = 1; $p <= $first_day_dp; $p++)
-            if ($p != $lunch_after)
-                $teachable_per_day++;
-        $total_required = count($classes) * $teachable_per_day * count($working_days);
-        $filled_count = count($timetable_data);
-    }
+    // For 'same' schedule, the replicated data is what we count
+    // No need for extra math, $timetable_data already contains all replicated rows
+    $filled_count = count($timetable_data);
 
     $success_rate = ($total_required > 0) ? round(($filled_count / $total_required) * 100, 1) : 0;
 
