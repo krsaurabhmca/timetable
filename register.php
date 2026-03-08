@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
     // Check if email exists
     $check = db_query("SELECT id FROM users WHERE email = '$email'");
     if (mysqli_num_rows($check) > 0) {
-        $error = "Ye email pehle se registered hai!";
+        $error = "This email is already registered!";
     }
     else {
         // Create organization
@@ -79,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
         <div style="text-align: center;">
             <span class="trial-badge">14 DAYS FREE TRIAL</span>
         </div>
-        <h1>Abhi Register Karein!</h1>
-        <p>Apna account banaiye aur school routine ki tension khatam kijiye.</p>
+        <h1>Create Free Account</h1>
+        <p>Start your trial and solve your school routine problems today.</p>
 
         <?php if ($error): ?>
             <div class="alert alert-danger"><?php echo $error; ?></div>
@@ -89,24 +89,24 @@ endif; ?>
 
         <form method="POST">
             <div class="form-group">
-                <label>Institution / School Ka Naam</label>
-                <input type="text" name="org_name" required placeholder="Jaise: St. Xavier High School">
+                <label>Institution / School Name</label>
+                <input type="text" name="org_name" required placeholder="e.g. St. Xavier High School">
             </div>
             <div class="form-group">
-                <label>Administrator Ka Pura Naam</label>
-                <input type="text" name="full_name" required placeholder="Jaise: Rahul Kumar">
+                <label>Administrator Full Name</label>
+                <input type="text" name="full_name" required placeholder="e.g. Rahul Kumar">
             </div>
             <div class="form-group">
                 <label>Work Email Address</label>
                 <input type="email" name="email" required placeholder="admin@school.com">
             </div>
             <div class="form-group">
-                <label>Ek Naya Password Rakhein</label>
+                <label>Set New Password</label>
                 <input type="password" name="password" required placeholder="••••••••">
             </div>
-            <button type="submit" name="register" class="btn">Trial Start Karein <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
+            <button type="submit" name="register" class="btn">Start Free Trial <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></button>
             <div class="login-link">
-                Pehle se account hai? <a href="login.php">Log In Karein</a>
+                Already have an account? <a href="login.php">Log In</a>
             </div>
         </form>
     </div>
