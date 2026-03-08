@@ -3,19 +3,19 @@ require_once 'config.php';
 
 // Fetch all teachers and their weekly loads
 $teachers_res = db_query("SELECT t.*, 
-                           (SELECT COUNT(*) FROM timetable WHERE teacher_id = t.id) as current_load 
-                           FROM teachers t ORDER BY name");
+                           (SELECT COUNT(*) FROM timetable WHERE teacher_id = t.id AND org_id = '$org_id') as current_load 
+                           FROM teachers t WHERE t.org_id = '$org_id' ORDER BY name");
 $teachers = [];
 while ($row = mysqli_fetch_assoc($teachers_res))
     $teachers[] = $row;
 
 // Fetch all classes and their subject coverage
-$classes_res = db_query("SELECT * FROM classes ORDER BY class_name, section");
+$classes_res = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name, section");
 $classes = [];
 while ($row = mysqli_fetch_assoc($classes_res))
     $classes[] = $row;
 
-$settings_res = db_query("SELECT * FROM settings");
+$settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
 while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
@@ -97,9 +97,9 @@ endforeach; ?>
                     <tbody>
                         <?php foreach ($classes as $c):
     $cid = $c['id'];
-    $filled = mysqli_fetch_assoc(db_query("SELECT COUNT(*) as count FROM timetable WHERE class_id = $cid"))['count'];
-    $subs_count = mysqli_fetch_assoc(db_query("SELECT COUNT(DISTINCT subject_id) as count FROM teacher_assignments WHERE class_id = $cid"))['count'];
-    $coverage = ($filled / $total_weekly_periods) * 100;
+    $filled = mysqli_fetch_assoc(db_query("SELECT COUNT(*) as count FROM timetable WHERE class_id = $cid AND org_id = '$org_id'"))['count'];
+    $subs_count = mysqli_fetch_assoc(db_query("SELECT COUNT(DISTINCT subject_id) as count FROM teacher_assignments WHERE class_id = $cid AND org_id = '$org_id'"))['count'];
+    $coverage = ($total_weekly_periods > 0) ? ($filled / $total_weekly_periods) * 100 : 0;
 ?>
                         <tr>
                             <td style="padding: 0.75rem;"><strong><?php echo $c['class_name']; ?></strong></td>
@@ -135,11 +135,11 @@ endforeach; ?>
                 <tbody>
                     <?php
 $subjects_res = db_query("SELECT s.*, 
-                                                (SELECT COUNT(DISTINCT class_id) FROM teacher_assignments WHERE subject_id = s.id) as class_count,
-                                                (SELECT COUNT(*) FROM timetable WHERE subject_id = s.id) as total_periods
-                                                FROM subjects s ORDER BY total_periods DESC");
+                                                (SELECT COUNT(DISTINCT class_id) FROM teacher_assignments WHERE subject_id = s.id AND org_id = '$org_id') as class_count,
+                                                (SELECT COUNT(*) FROM timetable WHERE subject_id = s.id AND org_id = '$org_id') as total_periods
+                                                FROM subjects s WHERE s.org_id = '$org_id' ORDER BY total_periods DESC");
 
-$allocated_total_res = db_query("SELECT COUNT(*) as count FROM timetable");
+$allocated_total_res = db_query("SELECT COUNT(*) as count FROM timetable WHERE org_id = '$org_id'");
 $grand_total_allocated = mysqli_fetch_assoc($allocated_total_res)['count'] ?? 1;
 
 while ($s = mysqli_fetch_assoc($subjects_res)):
@@ -181,11 +181,11 @@ endwhile; ?>
     $cid = $c['id'];
     // Get subjects and their counts for this class
     $class_subs = db_query("SELECT s.subject_name, tea.name as teacher_name, s.color,
-                                       (SELECT COUNT(*) FROM timetable WHERE class_id = $cid AND subject_id = s.id) as count
+                                       (SELECT COUNT(*) FROM timetable WHERE class_id = $cid AND subject_id = s.id AND org_id = '$org_id') as count
                                        FROM teacher_assignments ta
                                        JOIN subjects s ON ta.subject_id = s.id
                                        JOIN teachers tea ON ta.teacher_id = tea.id
-                                       WHERE ta.class_id = $cid
+                                       WHERE ta.class_id = $cid AND ta.org_id = '$org_id'
                                        ORDER BY count DESC");
 ?>
             <div class="card" style="padding: 1rem; border: 1px solid #e2e8f0; background: #fff;">

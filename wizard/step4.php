@@ -5,20 +5,20 @@ require_once '../config.php';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_restrictions'])) {
     $teacher_id = db_escape($_POST['teacher_id']);
     // Clear existing for this teacher
-    db_query("DELETE FROM teacher_restrictions WHERE teacher_id = $teacher_id");
+    db_query("DELETE FROM teacher_restrictions WHERE teacher_id = $teacher_id AND org_id = '$org_id'");
 
     if (isset($_POST['blocked_slots'])) {
         foreach ($_POST['blocked_slots'] as $slot) {
             list($day, $period) = explode('|', $slot);
             $day = db_escape($day);
             $period = db_escape($period);
-            db_query("INSERT INTO teacher_restrictions (teacher_id, day_of_week, period_number) VALUES ($teacher_id, '$day', $period)");
+            db_query("INSERT INTO teacher_restrictions (teacher_id, day_of_week, period_number, org_id) VALUES ($teacher_id, '$day', $period, '$org_id')");
         }
     }
 }
 
-$teachers = db_query("SELECT * FROM teachers ORDER BY name");
-$settings_res = db_query("SELECT * FROM settings");
+$teachers = db_query("SELECT * FROM teachers WHERE org_id = '$org_id' ORDER BY name");
+$settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
 while ($row = mysqli_fetch_assoc($settings_res)) {
     $settings[$row['key']] = $row['value'];
@@ -64,7 +64,7 @@ require_once '../includes/header.php';
         <?php while ($t = mysqli_fetch_assoc($teachers)):
     $tid = $t['id'];
     $restrictions = [];
-    $res_res = db_query("SELECT * FROM teacher_restrictions WHERE teacher_id = $tid");
+    $res_res = db_query("SELECT * FROM teacher_restrictions WHERE teacher_id = $tid AND org_id = '$org_id'");
     while ($r = mysqli_fetch_assoc($res_res)) {
         $restrictions[] = $r['day_of_week'] . '|' . $r['period_number'];
     }

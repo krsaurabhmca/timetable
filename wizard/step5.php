@@ -2,17 +2,17 @@
 require_once '../config.php';
 
 // Fetch all necessary data
-$classes_res = db_query("SELECT * FROM classes ORDER BY class_name, section");
+$classes_res = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name, section");
 $classes = [];
 while ($row = mysqli_fetch_assoc($classes_res))
     $classes[] = $row;
 
-$teachers_res = db_query("SELECT * FROM teachers");
+$teachers_res = db_query("SELECT * FROM teachers WHERE org_id = '$org_id'");
 $teachers_data = [];
 while ($row = mysqli_fetch_assoc($teachers_res))
     $teachers_data[$row['id']] = $row;
 
-$settings_res = db_query("SELECT * FROM settings");
+$settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
 while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
@@ -21,14 +21,14 @@ $working_days = explode(',', $settings['working_days']);
 $periods_count = (int)$settings['periods_per_day'];
 
 // Assignments
-$assignments_res = db_query("SELECT * FROM teacher_assignments");
+$assignments_res = db_query("SELECT * FROM teacher_assignments WHERE org_id = '$org_id'");
 $class_assignments = []; // [class_id][subject_id] = [teacher_ids...]
 while ($row = mysqli_fetch_assoc($assignments_res)) {
     $class_assignments[$row['class_id']][$row['subject_id']][] = $row['teacher_id'];
 }
 
 // Restrictions
-$restrictions_res = db_query("SELECT * FROM teacher_restrictions");
+$restrictions_res = db_query("SELECT * FROM teacher_restrictions WHERE org_id = '$org_id'");
 $teacher_blocks = []; // [teacher_id][day][period] = true
 while ($row = mysqli_fetch_assoc($restrictions_res)) {
     $teacher_blocks[$row['teacher_id']][$row['day_of_week']][$row['period_number']] = true;
@@ -40,7 +40,7 @@ $status = "info";
 // Support Direct Generation from Dashboard
 if (isset($_GET['direct_gen']) || isset($_POST['generate'])) {
     // Clear existing timetable
-    db_query("DELETE FROM timetable WHERE is_adjustment = FALSE");
+    db_query("DELETE FROM timetable WHERE is_adjustment = FALSE AND org_id = '$org_id'");
 
     $timetable_data = [];
     $teacher_load = []; // [teacher_id] = weekly_count
@@ -57,7 +57,7 @@ if (isset($_GET['direct_gen']) || isset($_POST['generate'])) {
     $lunch_after = (int)($settings['lunch_after_period'] ?? 0);
 
     // Fetch Priorities
-    $priority_res = db_query("SELECT id, priority FROM subjects");
+    $priority_res = db_query("SELECT id, priority FROM subjects WHERE org_id = '$org_id'");
     $subject_priorities = [];
     while ($prow = mysqli_fetch_assoc($priority_res)) {
         $subject_priorities[$prow['id']] = $prow['priority'] ?? 3;
@@ -117,11 +117,11 @@ if (isset($_GET['direct_gen']) || isset($_POST['generate'])) {
                     $assigned = false;
 
                     // Fetch class teacher data for 1st period constraint
-                    $ct_res = db_query("SELECT id FROM teachers WHERE is_class_teacher_of = $cid LIMIT 1");
+                    $ct_res = db_query("SELECT id FROM teachers WHERE is_class_teacher_of = $cid AND org_id = '$org_id' LIMIT 1");
                     $ct_data = mysqli_fetch_assoc($ct_res);
                     $ct_id = $ct_data ? $ct_data['id'] : null;
 
-                    $class_subs_res = db_query("SELECT DISTINCT subject_id FROM teacher_assignments WHERE class_id = $cid");
+                    $class_subs_res = db_query("SELECT DISTINCT subject_id FROM teacher_assignments WHERE class_id = $cid AND org_id = '$org_id'");
                     $subjects_list = [];
                     while ($srow = mysqli_fetch_assoc($class_subs_res))
                         $subjects_list[] = $srow['subject_id'];
@@ -300,8 +300,8 @@ if (isset($_GET['direct_gen']) || isset($_POST['generate'])) {
         $sid = $row['subject_id'];
         $day = $row['day'];
         $period = $row['period'];
-        db_query("INSERT INTO timetable (class_id, teacher_id, subject_id, day_of_week, period_number) 
-                  VALUES ($cid, $tid, $sid, '$day', $period)");
+        db_query("INSERT INTO timetable (class_id, teacher_id, subject_id, day_of_week, period_number, org_id) 
+                  VALUES ($cid, $tid, $sid, '$day', $period, '$org_id')");
     }
 
     // Failure Analysis
@@ -432,14 +432,14 @@ endif; ?>
     </div>
 
     <form method="POST">
-        <?php $has_routine = mysqli_num_rows(db_query("SELECT id FROM timetable LIMIT 1")) > 0; ?>
+        <?php $has_routine = mysqli_num_rows(db_query("SELECT id FROM timetable WHERE org_id = '$org_id' LIMIT 1")) > 0; ?>
         <button type="submit" name="generate" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.25rem;" 
                 onclick="return <?php echo $has_routine ? "confirm('Are you sure you want to REGENERATE? This will delete the current routine and create a new one.')" : "true"; ?>;">
             <i class="fas fa-wand-sparkles"></i> <?php echo $has_routine ? 'Regenerate Routine' : 'Generate Now'; ?>
         </button>
     </form>
 
-    <?php if (mysqli_num_rows(db_query("SELECT id FROM timetable LIMIT 1")) > 0): ?>
+    <?php if (mysqli_num_rows(db_query("SELECT id FROM timetable WHERE org_id = '$org_id' LIMIT 1")) > 0): ?>
     <div style="margin-top: 3rem; display: flex; justify-content: center; gap: 1rem;">
         <a href="<?php echo BASE_URL; ?>/index.php" class="btn btn-secondary">Go to Dashboard</a>
         <a href="<?php echo BASE_URL; ?>/view_timetable.php" class="btn btn-success" style="background: var(--success); color: white;">

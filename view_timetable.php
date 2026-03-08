@@ -5,8 +5,8 @@ $type = $_GET['type'] ?? 'class'; // class or teacher
 $id = $_GET['id'] ?? null;
 
 // Fetch Filters
-$classes = db_query("SELECT * FROM classes ORDER BY class_name");
-$teachers = db_query("SELECT * FROM teachers ORDER BY name");
+$classes = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name");
+$teachers = db_query("SELECT * FROM teachers WHERE org_id = '$org_id' ORDER BY name");
 
 $today_date = date('Y-m-d');
 $today_day = date('l');
@@ -16,7 +16,7 @@ if ($id) {
         $adj_res = db_query("SELECT ta.*, tea.name as proxy_name 
                             FROM timetable_adjustments ta
                             JOIN teachers tea ON ta.proxy_teacher_id = tea.id
-                            WHERE ta.class_id = $id AND ta.adjustment_date = '$today_date'");
+                            WHERE ta.class_id = $id AND ta.adjustment_date = '$today_date' AND ta.org_id = '$org_id'");
         while ($adj = mysqli_fetch_assoc($adj_res))
             $adjustments[$adj['day_of_week']][$adj['period_number']] = $adj;
     }
@@ -27,13 +27,13 @@ if ($id) {
                             JOIN classes c ON ta.class_id = c.id
                             JOIN teachers tea_orig ON ta.original_teacher_id = tea_orig.id
                             JOIN teachers tea_proxy ON ta.proxy_teacher_id = tea_proxy.id
-                            WHERE (ta.original_teacher_id = $id OR ta.proxy_teacher_id = $id) AND ta.adjustment_date = '$today_date'");
+                            WHERE (ta.original_teacher_id = $id OR ta.proxy_teacher_id = $id) AND ta.adjustment_date = '$today_date' AND ta.org_id = '$org_id'");
         while ($adj = mysqli_fetch_assoc($adj_res))
             $adjustments[$adj['day_of_week']][$adj['period_number']] = $adj;
     }
 }
 
-$settings_res = db_query("SELECT * FROM settings");
+$settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
 while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
@@ -49,8 +49,8 @@ if ($id) {
                         FROM timetable t 
                         JOIN subjects s ON t.subject_id = s.id 
                         JOIN teachers tea ON t.teacher_id = tea.id 
-                        WHERE t.class_id = $id");
-        $class_data = mysqli_fetch_assoc(db_query("SELECT * FROM classes WHERE id = $id"));
+                        WHERE t.class_id = $id AND t.org_id = '$org_id'");
+        $class_data = mysqli_fetch_assoc(db_query("SELECT * FROM classes WHERE id = $id AND org_id = '$org_id'"));
         $current_view_title = "Class: " . $class_data['class_name'];
     }
     else {
@@ -58,8 +58,8 @@ if ($id) {
                         FROM timetable t 
                         JOIN subjects s ON t.subject_id = s.id 
                         JOIN classes c ON t.class_id = c.id 
-                        WHERE t.teacher_id = $id");
-        $teacher_data = mysqli_fetch_assoc(db_query("SELECT * FROM teachers WHERE id = $id"));
+                        WHERE t.teacher_id = $id AND t.org_id = '$org_id'");
+        $teacher_data = mysqli_fetch_assoc(db_query("SELECT * FROM teachers WHERE id = $id AND org_id = '$org_id'"));
         $current_view_title = "Teacher: " . $teacher_data['name'];
     }
 

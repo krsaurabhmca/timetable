@@ -4,6 +4,11 @@ $username = "root";
 $password = "";
 $dbname = "timetable_db";
 
+session_start();
+$org_id = $_SESSION['org_id'] ?? 0;
+$org_where = $org_id ? " WHERE org_id = '$org_id' " : "";
+$org_and = $org_id ? " AND org_id = '$org_id' " : "";
+
 // Create connection
 $conn = mysqli_connect($host, $username, $password);
 
@@ -25,12 +30,13 @@ else {
 function db_query($sql)
 {
     global $conn;
-    $result = mysqli_query($conn, $sql);
-    if (!$result) {
-        // Log error or handle it
+    try {
+        $result = mysqli_query($conn, $sql);
+        return $result;
+    }
+    catch (mysqli_sql_exception $e) {
         return false;
     }
-    return $result;
 }
 
 // Function to escape strings

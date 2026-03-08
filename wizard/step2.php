@@ -4,55 +4,56 @@ require_once '../config.php';
 // Handle Deletion
 if (isset($_GET['delete_class'])) {
     $id = db_escape($_GET['delete_class']);
-    db_query("DELETE FROM classes WHERE id = $id");
+    db_query("DELETE FROM classes WHERE id = $id AND org_id = '$org_id'");
 }
 if (isset($_GET['delete_subject'])) {
     $id = db_escape($_GET['delete_subject']);
-    db_query("DELETE FROM subjects WHERE id = $id");
+    db_query("DELETE FROM subjects WHERE id = $id AND org_id = '$org_id'");
 }
 if (isset($_GET['delete_mapping'])) {
     $id = db_escape($_GET['delete_mapping']);
-    db_query("DELETE FROM class_subjects WHERE id = $id");
+    db_query("DELETE FROM class_subjects WHERE id = $id AND org_id = '$org_id'");
 }
 
 // Handle Addition
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['add_class'])) {
         $name = db_escape($_POST['class_name']);
-        db_query("INSERT INTO classes (class_name, section) VALUES ('$name', '')");
+        db_query("INSERT IGNORE INTO classes (class_name, section, org_id) VALUES ('$name', '', '$org_id')");
     }
     if (isset($_POST['add_subject'])) {
         $name = db_escape($_POST['subject_name']);
         $priority = db_escape($_POST['priority'] ?? 3);
         $color = db_escape($_POST['color'] ?? '');
-        db_query("INSERT INTO subjects (subject_name, priority, color) VALUES ('$name', '$priority', '$color')");
+        db_query("INSERT IGNORE INTO subjects (subject_name, priority, color, org_id) VALUES ('$name', '$priority', '$color', '$org_id')");
     }
     if (isset($_POST['map_subject'])) {
         $class_id = db_escape($_POST['class_id']);
         $subject_id = db_escape($_POST['subject_id']);
-        db_query("INSERT IGNORE INTO class_subjects (class_id, subject_id) VALUES ($class_id, $subject_id)");
+        db_query("INSERT IGNORE INTO class_subjects (class_id, subject_id, org_id) VALUES ($class_id, $subject_id, '$org_id')");
     }
     // Handle Editing
     if (isset($_POST['edit_class'])) {
         $id = db_escape($_POST['id']);
         $name = db_escape($_POST['class_name']);
-        db_query("UPDATE classes SET class_name = '$name' WHERE id = $id");
+        db_query("UPDATE classes SET class_name = '$name' WHERE id = $id AND org_id = '$org_id'");
     }
     if (isset($_POST['edit_subject'])) {
         $id = db_escape($_POST['id']);
         $name = db_escape($_POST['subject_name']);
         $priority = db_escape($_POST['priority']);
         $color = db_escape($_POST['color'] ?? '');
-        db_query("UPDATE subjects SET subject_name = '$name', priority = '$priority', color = '$color' WHERE id = $id");
+        db_query("UPDATE subjects SET subject_name = '$name', priority = '$priority', color = '$color' WHERE id = $id AND org_id = '$org_id'");
     }
 }
 
-$classes = db_query("SELECT * FROM classes ORDER BY class_name");
-$subjects = db_query("SELECT * FROM subjects ORDER BY subject_name");
+$classes = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name");
+$subjects = db_query("SELECT * FROM subjects WHERE org_id = '$org_id' ORDER BY subject_name");
 $mappings = db_query("SELECT cs.*, c.class_name, c.section, s.subject_name 
                       FROM class_subjects cs 
                       JOIN classes c ON cs.class_id = c.id 
                       JOIN subjects s ON cs.subject_id = s.id 
+                      WHERE cs.org_id = '$org_id'
                       ORDER BY c.class_name, s.subject_name");
 
 require_once '../includes/header.php';
@@ -106,7 +107,7 @@ require_once '../includes/header.php';
                 <tbody>
                     <?php mysqli_data_seek($classes, 0);
 $classes_counts = [];
-$counts_res = db_query("SELECT class_id, COUNT(*) as count FROM class_subjects GROUP BY class_id");
+$counts_res = db_query("SELECT class_id, COUNT(*) as count FROM class_subjects WHERE org_id = '$org_id' GROUP BY class_id");
 while ($cr = mysqli_fetch_assoc($counts_res))
     $classes_counts[$cr['class_id']] = $cr['count'];
 

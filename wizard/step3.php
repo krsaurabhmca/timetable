@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_teacher'])) {
     $code = db_escape($_POST['employee_code']);
 
     if (empty($code)) {
-        $count_res = db_query("SELECT MAX(id) as max_id FROM teachers");
+        $count_res = db_query("SELECT MAX(id) as max_id FROM teachers WHERE org_id = '$org_id'");
         $count = mysqli_fetch_assoc($count_res)['max_id'] ?? 0;
         $code = "T-" . str_pad($count + 1, 3, '0', STR_PAD_LEFT);
     }
@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_teacher'])) {
     $leisure = db_escape($_POST['leisure_per_day']);
     $max_subs = db_escape($_POST['max_subjects'] ?? 1);
 
-    db_query("INSERT INTO teachers (name, employee_code, weekly_limit, leisure_per_day, max_subjects) VALUES ('$name', '$code', '$limit', '$leisure', '$max_subs')");
+    db_query("INSERT IGNORE INTO teachers (name, employee_code, weekly_limit, leisure_per_day, max_subjects, org_id) VALUES ('$name', '$code', '$limit', '$leisure', '$max_subs', '$org_id')");
 }
 
 // Handle Edit Teacher
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_teacher'])) {
     $leisure = db_escape($_POST['leisure_per_day']);
     $max_subs = db_escape($_POST['max_subjects']);
 
-    db_query("UPDATE teachers SET name='$name', employee_code='$code', weekly_limit='$limit', leisure_per_day='$leisure', max_subjects='$max_subs' WHERE id=$id");
+    db_query("UPDATE teachers SET name='$name', employee_code='$code', weekly_limit='$limit', leisure_per_day='$leisure', max_subjects='$max_subs' WHERE id=$id AND org_id='$org_id'");
 }
 
 // Handle Add Assignment
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_assignment'])) {
 
     foreach ($class_ids as $class_id) {
         $class_id = db_escape($class_id);
-        db_query("INSERT INTO teacher_assignments (teacher_id, subject_id, class_id) VALUES ('$teacher_id', '$subject_id', '$class_id')");
+        db_query("INSERT IGNORE INTO teacher_assignments (teacher_id, subject_id, class_id, org_id) VALUES ('$teacher_id', '$subject_id', '$class_id', '$org_id')");
     }
 }
 
@@ -49,26 +49,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['set_class_teacher'])) 
     $class_id = db_escape($_POST['class_id']);
 
     // Clear previous mapping for this class if any
-    db_query("UPDATE teachers SET is_class_teacher_of = NULL WHERE is_class_teacher_of = $class_id");
-    db_query("UPDATE teachers SET is_class_teacher_of = $class_id WHERE id = $teacher_id");
+    db_query("UPDATE teachers SET is_class_teacher_of = NULL WHERE is_class_teacher_of = $class_id AND org_id = '$org_id'");
+    db_query("UPDATE teachers SET is_class_teacher_of = $class_id WHERE id = $teacher_id AND org_id = '$org_id'");
 }
 
 if (isset($_GET['delete_teacher'])) {
     $id = db_escape($_GET['delete_teacher']);
-    db_query("DELETE FROM teachers WHERE id = $id");
+    db_query("DELETE FROM teachers WHERE id = $id AND org_id = '$org_id'");
 }
 
 if (isset($_GET['delete_assignment'])) {
     $id = db_escape($_GET['delete_assignment']);
-    db_query("DELETE FROM teacher_assignments WHERE id = $id");
+    db_query("DELETE FROM teacher_assignments WHERE id = $id AND org_id = '$org_id'");
 }
 
-$teachers = db_query("SELECT * FROM teachers ORDER BY name");
-$classes = db_query("SELECT * FROM classes ORDER BY class_name");
-$subjects = db_query("SELECT * FROM subjects ORDER BY subject_name");
+$teachers = db_query("SELECT * FROM teachers WHERE org_id = '$org_id' ORDER BY name");
+$classes = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name");
+$subjects = db_query("SELECT * FROM subjects WHERE org_id = '$org_id' ORDER BY subject_name");
 
 // Get all mappings for JS filtering
-$mappings_res = db_query("SELECT class_id, subject_id FROM class_subjects");
+$mappings_res = db_query("SELECT class_id, subject_id FROM class_subjects WHERE org_id = '$org_id'");
 $mappings = [];
 while ($m = mysqli_fetch_assoc($mappings_res)) {
     $mappings[$m['class_id']][] = (int)$m['subject_id'];
@@ -306,7 +306,7 @@ while ($t = mysqli_fetch_assoc($teachers)):
                                           FROM teacher_assignments ta 
                                           JOIN subjects s ON ta.subject_id = s.id 
                                           JOIN classes c ON ta.class_id = c.id 
-                                          WHERE ta.teacher_id = $tid");
+                                          WHERE ta.teacher_id = $tid AND ta.org_id = '$org_id'");
 ?>
                 <tr>
                     <td><strong><?php echo $t['name']; ?></strong><br><small>Limit: <?php echo $t['weekly_limit']; ?>/wk | Max Sub: <?php echo $t['max_subjects'] ?? 1; ?></small></td>

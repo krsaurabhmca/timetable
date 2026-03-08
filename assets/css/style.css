@@ -1,20 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --secondary: #64748b;
-    --success: #10b981;
+    --primary: #4ade80;
+    /* Parrot Green */
+    --primary-dark: #22c55e;
+    --secondary: #000000;
+    /* Black */
+    --success: #22c55e;
     --danger: #ef4444;
     --warning: #f59e0b;
     --background: #f8fafc;
     --card-bg: #ffffff;
-    --text-main: #1e293b;
+    --text-main: #000000;
     --text-muted: #64748b;
     --border: #e2e8f0;
     --radius-lg: 12px;
     --radius-md: 8px;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -58,12 +60,16 @@ header {
 
 .logo {
     font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary);
+    font-weight: 800;
+    color: var(--secondary);
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.logo span {
+    color: var(--primary);
 }
 
 /* Wizard Stepper */
@@ -176,7 +182,7 @@ textarea {
     background: #fdfdfd;
     font-family: inherit;
     font-size: 0.95rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
 }
 
 input:focus {
@@ -203,7 +209,7 @@ input:focus {
 
 .btn-primary {
     background: var(--primary);
-    color: white;
+    color: var(--secondary);
 }
 
 .btn-primary:hover {

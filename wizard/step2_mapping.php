@@ -7,25 +7,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_mappings'])) {
     $selected_subjects = $_POST['subject_ids'] ?? [];
 
     // Clear existing for this class
-    db_query("DELETE FROM class_subjects WHERE class_id = $class_id");
+    db_query("DELETE FROM class_subjects WHERE class_id = $class_id AND org_id = '$org_id'");
 
     // Add new
     foreach ($selected_subjects as $sid) {
         $sid = db_escape($sid);
-        db_query("INSERT INTO class_subjects (class_id, subject_id) VALUES ($class_id, $sid)");
+        db_query("INSERT INTO class_subjects (class_id, subject_id, org_id) VALUES ($class_id, $sid, '$org_id')");
     }
     $message = "Mappings updated successfully for the selected class.";
 }
 
-$classes = db_query("SELECT * FROM classes ORDER BY class_name");
-$subjects_res = db_query("SELECT * FROM subjects ORDER BY subject_name");
+$classes = db_query("SELECT * FROM classes WHERE org_id = '$org_id' ORDER BY class_name");
+$subjects_res = db_query("SELECT * FROM subjects WHERE org_id = '$org_id' ORDER BY subject_name");
 $subjects = [];
 while ($s = mysqli_fetch_assoc($subjects_res)) {
     $subjects[] = $s;
 }
 
 // Get all existing mappings for UI
-$mappings_res = db_query("SELECT class_id, subject_id FROM class_subjects");
+$mappings_res = db_query("SELECT class_id, subject_id FROM class_subjects WHERE org_id = '$org_id'");
 $mappings = [];
 while ($m = mysqli_fetch_assoc($mappings_res)) {
     $mappings[$m['class_id']][] = (int)$m['subject_id'];

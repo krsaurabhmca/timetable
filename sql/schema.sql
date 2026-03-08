@@ -21,6 +21,20 @@ CREATE TABLE IF NOT EXISTS subjects (
     subject_name VARCHAR(100) NOT NULL UNIQUE
 );
 
+-- Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    org_id INT,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'staff') DEFAULT 'admin',
+    reset_token VARCHAR(100) NULL,
+    reset_token_expires DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
+);
+
 -- Teachers Table
 CREATE TABLE IF NOT EXISTS teachers (
     id INT AUTO_INCREMENT PRIMARY KEY,

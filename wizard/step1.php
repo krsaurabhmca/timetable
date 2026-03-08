@@ -11,14 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $restrict_ct = db_escape($_POST['restrict_class_teacher_1st_period'] ?? 'no');
     $lunch_after = db_escape($_POST['lunch_after_period'] ?? 0);
 
-    db_query("UPDATE settings SET value = '$working_days' WHERE `key` = 'working_days'");
-    db_query("UPDATE settings SET value = '$periods_per_day' WHERE `key` = 'periods_per_day'");
-    db_query("INSERT INTO settings (`key`, `value`) VALUES ('saturday_periods', '$saturday_periods') ON DUPLICATE KEY UPDATE value = '$saturday_periods'");
-    db_query("UPDATE settings SET value = '$period_duration' WHERE `key` = 'period_duration'");
-    db_query("INSERT INTO settings (`key`, `value`) VALUES ('max_continuous_periods', '$max_cont') ON DUPLICATE KEY UPDATE value = '$max_cont'");
-    db_query("INSERT INTO settings (`key`, `value`) VALUES ('schedule_type', '$sched_type') ON DUPLICATE KEY UPDATE value = '$sched_type'");
-    db_query("INSERT INTO settings (`key`, `value`) VALUES ('restrict_class_teacher_1st_period', '$restrict_ct') ON DUPLICATE KEY UPDATE value = '$restrict_ct'");
-    db_query("INSERT INTO settings (`key`, `value`) VALUES ('lunch_after_period', '$lunch_after') ON DUPLICATE KEY UPDATE value = '$lunch_after'");
+    db_query("UPDATE settings SET value = '$working_days' WHERE `key` = 'working_days' AND org_id = '$org_id'");
+    db_query("UPDATE settings SET value = '$periods_per_day' WHERE `key` = 'periods_per_day' AND org_id = '$org_id'");
+    db_query("INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('saturday_periods', '$org_id', '$saturday_periods') ON DUPLICATE KEY UPDATE value = '$saturday_periods'");
+    db_query("UPDATE settings SET value = '$period_duration' WHERE `key` = 'period_duration' AND org_id = '$org_id'");
+    db_query("INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('max_continuous_periods', '$org_id', '$max_cont') ON DUPLICATE KEY UPDATE value = '$max_cont'");
+    db_query("INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('schedule_type', '$org_id', '$sched_type') ON DUPLICATE KEY UPDATE value = '$sched_type'");
+    db_query("INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('restrict_class_teacher_1st_period', '$org_id', '$restrict_ct') ON DUPLICATE KEY UPDATE value = '$restrict_ct'");
+    db_query("INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('lunch_after_period', '$org_id', '$lunch_after') ON DUPLICATE KEY UPDATE value = '$lunch_after'");
 
     header("Location: step2.php");
     exit;
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Fetch current settings
 $settings = [];
-$res = db_query("SELECT * FROM settings");
+$res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 while ($row = mysqli_fetch_assoc($res)) {
     $settings[$row['key']] = $row['value'];
 }

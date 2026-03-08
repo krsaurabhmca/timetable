@@ -16,30 +16,30 @@ if (isset($_POST['make_adjustment'])) {
     $day = db_escape($_POST['day']);
 
     if (!empty($proxy_id)) {
-        db_query("INSERT INTO timetable_adjustments (day_of_week, period_number, class_id, subject_id, original_teacher_id, proxy_teacher_id, adjustment_date) 
-                  VALUES ('$day', $period, $class_id, $subject_id, $original_id, $proxy_id, '$adj_date') 
+        db_query("INSERT INTO timetable_adjustments (day_of_week, period_number, class_id, subject_id, original_teacher_id, proxy_teacher_id, adjustment_date, org_id) 
+                  VALUES ('$day', $period, $class_id, $subject_id, $original_id, $proxy_id, '$adj_date', '$org_id') 
                   ON DUPLICATE KEY UPDATE proxy_teacher_id = $proxy_id");
         $msg = "Substitution assigned successfully.";
     }
     else {
-        db_query("DELETE FROM timetable_adjustments WHERE adjustment_date = '$adj_date' AND original_teacher_id = $original_id AND period_number = $period");
+        db_query("DELETE FROM timetable_adjustments WHERE adjustment_date = '$adj_date' AND original_teacher_id = $original_id AND period_number = $period AND org_id = '$org_id'");
         $msg = "Substitution removed.";
     }
 }
 
 // Get adjustments for this date
-$existing_adj_res = db_query("SELECT * FROM timetable_adjustments WHERE adjustment_date = '$date'");
+$existing_adj_res = db_query("SELECT * FROM timetable_adjustments WHERE adjustment_date = '$date' AND org_id = '$org_id'");
 $daily_adjustments = [];
 while ($adj = mysqli_fetch_assoc($existing_adj_res)) {
     $daily_adjustments[$adj['period_number']][$adj['original_teacher_id']] = $adj['proxy_teacher_id'];
 }
 
-$teachers_res = db_query("SELECT * FROM teachers ORDER BY name");
+$teachers_res = db_query("SELECT * FROM teachers WHERE org_id = '$org_id' ORDER BY name");
 $teachers_list = [];
 while ($t = mysqli_fetch_assoc($teachers_res))
     $teachers_list[$t['id']] = $t;
 
-$settings_res = db_query("SELECT * FROM settings");
+$settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
 while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
@@ -54,7 +54,7 @@ if ($absent_teacher_id) {
                     FROM timetable t 
                     JOIN subjects s ON t.subject_id = s.id 
                     JOIN classes c ON t.class_id = c.id 
-                    WHERE t.teacher_id = $absent_teacher_id AND t.day_of_week = '$day_name'");
+                    WHERE t.teacher_id = $absent_teacher_id AND t.day_of_week = '$day_name' AND t.org_id = '$org_id'");
     while ($row = mysqli_fetch_assoc($res)) {
         $absent_routine[$row['period_number']] = $row;
     }
@@ -134,7 +134,7 @@ endforeach; ?>
                                 <select name="proxy_teacher_id" required style="height: 38px; font-size: 0.85rem; border-radius: 8px; <?php echo $current_proxy ? 'border-color: var(--success); background: #f0fdf4;' : ''; ?>">
                                     <option value="">-- Assign Proxy --</option>
                                     <?php
-            $free_res = db_query("SELECT id, name FROM teachers WHERE id NOT IN (SELECT teacher_id FROM timetable WHERE day_of_week='$day_name' AND period_number=$p) AND id != $absent_teacher_id ORDER BY name");
+            $free_res = db_query("SELECT id, name FROM teachers WHERE id NOT IN (SELECT teacher_id FROM timetable WHERE day_of_week='$day_name' AND period_number=$p AND org_id = '$org_id') AND id != $absent_teacher_id AND org_id = '$org_id' ORDER BY name");
             while ($ft = mysqli_fetch_assoc($free_res)):
 ?>
                                     <option value="<?php echo $ft['id']; ?>" <?php echo($current_proxy == $ft['id']) ? 'selected' : ''; ?>>
