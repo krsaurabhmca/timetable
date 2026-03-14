@@ -3,7 +3,7 @@ require_once 'config.php';
 
 $settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
-while ($row = mysqli_fetch_assoc($settings_res))
+if ($settings_res) while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
 
 $working_days = explode(',', $settings['working_days']);
@@ -16,7 +16,7 @@ $classes_data = db_query("SELECT c.*, t.name as class_teacher_name, t.id as clas
                          WHERE c.org_id = '$org_id'
                          ORDER BY c.class_name");
 $classes = [];
-while ($row = mysqli_fetch_assoc($classes_data)) {
+if ($classes_data) while ($row = mysqli_fetch_assoc($classes_data)) {
     $classes[] = $row;
 }
 
@@ -34,7 +34,7 @@ if ($selected_day == date('l')) {
                         FROM timetable_adjustments ta
                         JOIN teachers tea ON ta.proxy_teacher_id = tea.id
                         WHERE ta.adjustment_date = '$today_date' AND ta.org_id = '$org_id'");
-    while ($adj = mysqli_fetch_assoc($adj_res)) {
+    if ($adj_res) while ($adj = mysqli_fetch_assoc($adj_res)) {
         $adjustments[$adj['period_number']][$adj['class_id']] = $adj['proxy_name'];
     }
 }
@@ -49,7 +49,7 @@ $timetable_res = db_query("SELECT t.*, s.subject_name, s.color, tea.name as teac
 
 $routine = [];
 
-while ($row = mysqli_fetch_assoc($timetable_res)) {
+if ($timetable_res) while ($row = mysqli_fetch_assoc($timetable_res)) {
     $routine[$row['period_number']][$row['class_id']] = $row;
 }
 

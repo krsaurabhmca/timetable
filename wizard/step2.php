@@ -89,7 +89,13 @@ require_once '../includes/header.php';
 <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
     <!-- Classes Section -->
     <div class="card fade-in">
-        <h2 class="card-title">Manage Classes</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <h2 class="card-title" style="margin:0;">Manage Classes</h2>
+            <button onclick="loadDemo('load_demo_classes', this)" class="btn btn-secondary"
+                style="font-size:0.78rem; padding:6px 14px; background:#f0fdf4; border-color:#bbf7d0; color:#15803d;">
+                <i class="fas fa-wand-magic-sparkles"></i> Load Demo Classes (V–X)
+            </button>
+        </div>
         <form method="POST" style="margin-bottom: 2rem;">
             <div style="display: flex; gap: 0.5rem;">
                 <input type="text" name="class_name" placeholder="Class Name (e.g. 10A, 9B)" required style="flex: 1;">
@@ -141,7 +147,13 @@ endwhile; ?>
 
     <!-- Subjects Section -->
     <div class="card fade-in" style="animation-delay: 0.1s;">
-        <h2 class="card-title">Manage Subjects</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <h2 class="card-title" style="margin:0;">Manage Subjects</h2>
+            <button onclick="loadDemo('load_demo_subjects', this)" class="btn btn-secondary"
+                style="font-size:0.78rem; padding:6px 14px; background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8;">
+                <i class="fas fa-wand-magic-sparkles"></i> Load CBSE Subjects
+            </button>
+        </div>
         <form method="POST" style="margin-bottom: 2rem;">
             <div style="display: flex; gap: 0.5rem; flex-direction: column;">
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -251,6 +263,50 @@ endwhile; ?>
     </div>
 </div>
 
+<!-- ── Demo Loader JS ─────────────────────────────────── -->
+<div id="demo-toast" style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999;
+    background:#1e293b; color:white; padding:12px 20px; border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2); font-size:0.88rem; font-weight:600;
+    align-items:center; gap:10px; min-width:280px;">
+    <i class="fas fa-circle-notch fa-spin" id="demo-toast-icon"></i>
+    <span id="demo-toast-msg">Loading...</span>
+</div>
+
+<script>
+function loadDemo(action, btn) {
+    const labels = {
+        load_demo_classes:  'Loading Demo Classes (V–X)...',
+        load_demo_subjects: 'Loading CBSE Subjects...',
+    };
+    const toast   = document.getElementById('demo-toast');
+    const toastMsg = document.getElementById('demo-toast-msg');
+    const toastIcon = document.getElementById('demo-toast-icon');
+
+    toastMsg.textContent = labels[action] || 'Loading...';
+    toastIcon.className = 'fas fa-circle-notch fa-spin';
+    toast.style.display = 'flex';
+    if (btn) btn.disabled = true;
+
+    fetch('../api/demo_data.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=' + action
+    })
+    .then(r => r.json())
+    .then(data => {
+        toastIcon.className = data.success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        toastIcon.style.color = data.success ? '#4ade80' : '#ef4444';
+        toastMsg.textContent  = data.message || (data.success ? 'Done!' : 'Error');
+        setTimeout(() => { toast.style.display = 'none'; location.reload(); }, 1800);
+    })
+    .catch(() => {
+        toastMsg.textContent = 'Request failed. Check server.';
+        toastIcon.className  = 'fas fa-times-circle';
+        toastIcon.style.color = '#ef4444';
+        setTimeout(() => { toast.style.display = 'none'; if (btn) btn.disabled = false; }, 2500);
+    });
+}
+</script>
 <script>
 function editClass(id, name) {
     const newName = prompt("Edit Class Name:", name);

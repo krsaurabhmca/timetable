@@ -106,7 +106,13 @@ require_once '../includes/header.php';
 </div>
 
 <div class="card fade-in">
-    <h2 class="card-title">Add Teacher & Initial Configuration</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
+        <h2 class="card-title" style="margin:0;">Add Teacher &amp; Initial Configuration</h2>
+        <button onclick="loadDemoTeachers(this)" class="btn btn-secondary"
+            style="font-size:0.78rem; padding:7px 16px; background:#f5f3ff; border-color:#c4b5fd; color:#5b21b6;">
+            <i class="fas fa-wand-magic-sparkles"></i> Load Demo Teachers + Auto-Assign
+        </button>
+    </div>
     <form method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: flex-end;">
         <div class="form-group" style="margin-bottom: 0;">
             <label>Full Name</label>
@@ -397,3 +403,41 @@ function editTeacher(t) {
 </div>
 
 <?php require_once '../includes/footer.php'; ?>
+
+<!-- Demo Loader -->
+<div id="demo-toast" style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999;
+    background:#1e293b; color:white; padding:12px 20px; border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2); font-size:0.88rem; font-weight:600;
+    align-items:center; gap:10px; min-width:300px;">
+    <i class="fas fa-circle-notch fa-spin" id="demo-toast-icon"></i>
+    <span id="demo-toast-msg">Loading demo teachers...</span>
+</div>
+<script>
+function loadDemoTeachers(btn) {
+    if (!confirm('This will add 15 demo teachers and auto-assign them to CBSE subjects across all classes. Continue?')) return;
+    const toast = document.getElementById('demo-toast');
+    const toastMsg = document.getElementById('demo-toast-msg');
+    const toastIcon = document.getElementById('demo-toast-icon');
+    toastMsg.textContent = 'Adding demo teachers & auto-assigning subjects...';
+    toastIcon.className = 'fas fa-circle-notch fa-spin';
+    toastIcon.style.color = 'white';
+    toast.style.display = 'flex';
+    if (btn) btn.disabled = true;
+    fetch('../api/demo_data.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=load_demo_teachers'
+    })
+    .then(r => r.json())
+    .then(data => {
+        toastIcon.className = data.success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        toastIcon.style.color = data.success ? '#4ade80' : '#ef4444';
+        toastMsg.textContent = data.message || 'Done!';
+        setTimeout(() => { toast.style.display = 'none'; location.reload(); }, 2000);
+    })
+    .catch(() => {
+        toastMsg.textContent = 'Request failed.';
+        setTimeout(() => { toast.style.display = 'none'; if(btn) btn.disabled=false; }, 2500);
+    });
+}
+</script>

@@ -45,7 +45,13 @@ require_once '../includes/header.php';
 </div>
 
 <div class="card fade-in">
-    <h2 class="card-title">Subject Mapping (Class-wise Subjects)</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.75rem;">
+        <h2 class="card-title" style="margin:0;">Subject Mapping (Class-wise Subjects)</h2>
+        <button onclick="loadDemo('auto_map_all', this)" class="btn btn-secondary"
+            style="font-size:0.78rem; padding:7px 16px; background:#fefce8; border-color:#fde68a; color:#92400e;">
+            <i class="fas fa-wand-magic-sparkles"></i> Auto-Map All Subjects → All Classes
+        </button>
+    </div>
     <p style="color: var(--text-muted); margin-bottom: 2rem;">Select a class to manage its applicable subjects. Only these subjects will appear for this class during teacher assignment.</p>
 
     <?php if (isset($message)): ?>
@@ -212,3 +218,40 @@ document.getElementById('select-all-subjects').addEventListener('change', functi
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
+
+<!-- Demo Loader -->
+<div id="demo-toast" style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999;
+    background:#1e293b; color:white; padding:12px 20px; border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2); font-size:0.88rem; font-weight:600;
+    align-items:center; gap:10px; min-width:280px;">
+    <i class="fas fa-circle-notch fa-spin" id="demo-toast-icon"></i>
+    <span id="demo-toast-msg">Loading...</span>
+</div>
+<script>
+function loadDemo(action, btn) {
+    const toast = document.getElementById('demo-toast');
+    const toastMsg = document.getElementById('demo-toast-msg');
+    const toastIcon = document.getElementById('demo-toast-icon');
+    toastMsg.textContent = 'Auto-mapping all subjects to all classes...';
+    toastIcon.className = 'fas fa-circle-notch fa-spin';
+    toastIcon.style.color = 'white';
+    toast.style.display = 'flex';
+    if (btn) btn.disabled = true;
+    fetch('../api/demo_data.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=' + action
+    })
+    .then(r => r.json())
+    .then(data => {
+        toastIcon.className = data.success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        toastIcon.style.color = data.success ? '#4ade80' : '#ef4444';
+        toastMsg.textContent = data.message || 'Done!';
+        setTimeout(() => { toast.style.display = 'none'; location.reload(); }, 1800);
+    })
+    .catch(() => {
+        toastMsg.textContent = 'Request failed.';
+        setTimeout(() => { toast.style.display = 'none'; if(btn) btn.disabled=false; }, 2500);
+    });
+}
+</script>

@@ -1,5 +1,7 @@
 <?php
 require_once 'config.php';
+// If already logged in, redirect to dashboard
+$already_logged_in = !empty($_SESSION['org_id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -158,8 +160,12 @@ require_once 'config.php';
                 <a href="#features">Features</a>
                 <a href="#how">How it Works</a>
                 <a href="#pricing">Pricing</a>
-                <a href="login.php" class="btn" style="border: 2px solid var(--secondary); background: transparent; display: flex;">LOGIN</a>
-                <a href="register.php" class="btn btn-primary" style="display: flex;">FREE TRIAL</a>
+                <?php if ($already_logged_in): ?>
+                    <a href="dashboard.php" class="btn btn-black" style="display:flex;"><i class="fas fa-th-large"></i> Dashboard</a>
+                <?php else: ?>
+                    <a href="login.php" class="btn" style="border: 2px solid var(--secondary); background: transparent; display: flex;">LOGIN</a>
+                    <a href="register.php" class="btn btn-primary" style="display: flex;">FREE TRIAL</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -174,8 +180,12 @@ require_once 'config.php';
                 <h1>Manual Timetable Se Ho Pareshan? <span>TimeGrid Hai Na!</span></h1>
                 <p>The ultimate AI-powered routine management system for schools and colleges. No more clashes, no more stress.</p>
                 <div style="display: flex; gap: 1rem; justify-content: center; flex-direction: column; align-items: center;">
-                    <a href="register.php" class="btn btn-black" style="width: 100%; justify-content: center;">Start Free Trial <i class="fas fa-arrow-right"></i></a>
-                    <a href="https://wa.me/919431426600" class="btn btn-primary" style="width: 100%; justify-content: center; background: transparent; border: 2px solid var(--secondary);"><i class="fab fa-whatsapp"></i> Book a Demo</a>
+                    <?php if ($already_logged_in): ?>
+                        <a href="dashboard.php" class="btn btn-black" style="width: 100%; justify-content: center;"><i class="fas fa-th-large"></i> Go to Dashboard</a>
+                    <?php else: ?>
+                        <a href="register.php" class="btn btn-black" style="width: 100%; justify-content: center;">Start Free Trial <i class="fas fa-arrow-right"></i></a>
+                        <a href="https://wa.me/919431426600" class="btn btn-primary" style="width: 100%; justify-content: center; background: transparent; border: 2px solid var(--secondary);"><i class="fab fa-whatsapp"></i> Book a Demo</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

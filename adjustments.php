@@ -30,18 +30,18 @@ if (isset($_POST['make_adjustment'])) {
 // Get adjustments for this date
 $existing_adj_res = db_query("SELECT * FROM timetable_adjustments WHERE adjustment_date = '$date' AND org_id = '$org_id'");
 $daily_adjustments = [];
-while ($adj = mysqli_fetch_assoc($existing_adj_res)) {
+if ($existing_adj_res) while ($adj = mysqli_fetch_assoc($existing_adj_res)) {
     $daily_adjustments[$adj['period_number']][$adj['original_teacher_id']] = $adj['proxy_teacher_id'];
 }
 
 $teachers_res = db_query("SELECT * FROM teachers WHERE org_id = '$org_id' ORDER BY name");
 $teachers_list = [];
-while ($t = mysqli_fetch_assoc($teachers_res))
+if ($teachers_res) while ($t = mysqli_fetch_assoc($teachers_res))
     $teachers_list[$t['id']] = $t;
 
 $settings_res = db_query("SELECT * FROM settings WHERE org_id = '$org_id'");
 $settings = [];
-while ($row = mysqli_fetch_assoc($settings_res))
+if ($settings_res) while ($row = mysqli_fetch_assoc($settings_res))
     $settings[$row['key']] = $row['value'];
 
 $is_sat = ($day_name === 'Saturday');
@@ -55,7 +55,7 @@ if ($absent_teacher_id) {
                     JOIN subjects s ON t.subject_id = s.id 
                     JOIN classes c ON t.class_id = c.id 
                     WHERE t.teacher_id = $absent_teacher_id AND t.day_of_week = '$day_name' AND t.org_id = '$org_id'");
-    while ($row = mysqli_fetch_assoc($res)) {
+    if ($res) while ($row = mysqli_fetch_assoc($res)) {
         $absent_routine[$row['period_number']] = $row;
     }
 }
@@ -135,7 +135,7 @@ endforeach; ?>
                                     <option value="">-- Assign Proxy --</option>
                                     <?php
             $free_res = db_query("SELECT id, name FROM teachers WHERE id NOT IN (SELECT teacher_id FROM timetable WHERE day_of_week='$day_name' AND period_number=$p AND org_id = '$org_id') AND id != $absent_teacher_id AND org_id = '$org_id' ORDER BY name");
-            while ($ft = mysqli_fetch_assoc($free_res)):
+            if ($free_res) while ($ft = mysqli_fetch_assoc($free_res)):
 ?>
                                     <option value="<?php echo $ft['id']; ?>" <?php echo($current_proxy == $ft['id']) ? 'selected' : ''; ?>>
                                         <?php echo $ft['name']; ?>
