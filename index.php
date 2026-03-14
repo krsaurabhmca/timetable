@@ -67,48 +67,132 @@ $already_logged_in = !empty($_SESSION['org_id']);
 
     /* ── HERO ─────────────────────────────────────────── */
     .hero {
-        padding:9rem 0 5rem;
-        background: radial-gradient(ellipse 80% 60% at 60% 0%, rgba(74,222,128,0.12) 0%, #fff 65%);
+        padding:8rem 0 4rem;
+        background:#fff;
         position:relative; overflow:hidden;
+        border-bottom:1px solid var(--border);
     }
-    .hero::before {
-        content:'';
-        position:absolute; inset:0;
-        background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234ade80' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        pointer-events:none;
+    /* Animated bg blobs */
+    .hero-blob1, .hero-blob2 {
+        position:absolute; border-radius:50%; pointer-events:none; filter:blur(80px);
     }
-    .hero-inner { display:flex; flex-direction:column; align-items:center; text-align:center; gap:2rem; position:relative; }
+    .hero-blob1 { width:520px;height:520px;top:-120px;right:-80px;background:rgba(74,222,128,0.1);animation:blobFloat 8s ease-in-out infinite; }
+    .hero-blob2 { width:360px;height:360px;bottom:-80px;left:-60px;background:rgba(74,222,128,0.06);animation:blobFloat 10s 2s ease-in-out infinite reverse; }
+    @keyframes blobFloat { 0%,100%{transform:scale(1) translateY(0)} 50%{transform:scale(1.05) translateY(-20px)} }
+
+    .hero-inner {
+        display:grid;
+        grid-template-columns:1fr;
+        gap:3rem;
+        position:relative;
+        align-items:center;
+    }
     .hero-badge {
         display:inline-flex; align-items:center; gap:8px;
         background:#f0fdf4; color:var(--green-dark);
         border:1px solid #bbf7d0; border-radius:50px;
-        padding:6px 16px; font-size:0.8rem; font-weight:700;
-        animation:fadeDown 0.6s ease both;
+        padding:6px 16px; font-size:0.78rem; font-weight:700;
+        animation:fadeDown 0.5s ease both;
     }
-    .hero-badge .dot { width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite; }
+    .hero-badge .dot { width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite; }
     .hero-title {
-        font-size:clamp(2.4rem, 6vw, 4.2rem); font-weight:900;
-        line-height:1.15; letter-spacing:-2px; color:var(--black);
-        animation:fadeUp 0.7s 0.1s ease both;
+        font-size:clamp(2.6rem, 5.5vw, 4.4rem); font-weight:900;
+        line-height:1.1; letter-spacing:-2.5px; color:var(--black);
+        animation:fadeUp 0.6s 0.1s ease both;
+        margin:0.9rem 0;
     }
-    .hero-title .hl { color:var(--green-dark); position:relative; }
-    .hero-title .hl::after {
-        content:''; position:absolute; bottom:-4px; left:0; right:0;
-        height:4px; background:var(--green); border-radius:2px;
+    .hero-title .hl {
+        color:var(--green-dark);
+        background:linear-gradient(135deg,#15803d,#4ade80);
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        background-clip:text;
     }
     .hero-sub {
-        max-width:600px; font-size:1.15rem; color:var(--grey);
-        font-weight:500; animation:fadeUp 0.7s 0.2s ease both; line-height:1.7;
+        font-size:1.1rem; color:var(--grey);
+        font-weight:500; animation:fadeUp 0.6s 0.2s ease both;
+        line-height:1.75; max-width:520px;
     }
-    .hero-ctas { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; animation:fadeUp 0.7s 0.3s ease both; }
+    .hero-ctas {
+        display:flex; gap:1rem; flex-wrap:wrap;
+        animation:fadeUp 0.6s 0.3s ease both;
+        margin-top:0.5rem;
+    }
+    /* Trust avatars row */
+    .hero-trust {
+        display:flex; align-items:center; gap:10px;
+        animation:fadeUp 0.6s 0.4s ease both;
+        margin-top:1.5rem; padding-top:1.5rem;
+        border-top:1px solid var(--border);
+    }
+    .avatar-stack { display:flex; }
+    .avatar-stack .av {
+        width:34px;height:34px;border-radius:50%;
+        border:2px solid #fff; margin-left:-10px;
+        display:flex;align-items:center;justify-content:center;
+        font-size:0.72rem;font-weight:800;color:#fff;
+    }
+    .avatar-stack .av:first-child { margin-left:0; }
+    .hero-trust-text { font-size:0.82rem; color:var(--grey); font-weight:600; line-height:1.4; }
+    .hero-trust-text strong { color:var(--black); display:block; }
+    .hero-stars { color:#f59e0b; font-size:0.75rem; }
+
+    /* ── HERO RIGHT — Timetable mockup ───────────────── */
+    .hero-visual {
+        animation:fadeUp 0.8s 0.3s ease both;
+        position:relative;
+        z-index:2;
+    }
+    .hero-image-container {
+        position:relative;
+        padding:1rem;
+    }
+    .mockup-img-wrap {
+        border-radius:24px;
+        overflow:hidden;
+        box-shadow:0 40px 100px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+        position:relative;
+        background:#fff;
+        line-height:0;
+    }
+    .hero-mockup-img {
+        width:100%;
+        height:auto;
+        display:block;
+        transition:transform 0.5s ease;
+    }
+    .mockup-img-wrap:hover .hero-mockup-img {
+        transform:scale(1.02);
+    }
+    .img-overlay-glow {
+        position:absolute;
+        inset:0;
+        background:radial-gradient(circle at 50% 0%, rgba(74,222,128,0.1), transparent 70%);
+        pointer-events:none;
+    }
+    /* floating tags */
+    .hero-float-tag {
+        position:absolute; border-radius:12px; padding:10px 16px;
+        font-size:0.75rem; font-weight:800; display:flex; align-items:center; gap:8px;
+        box-shadow:0 15px 35px rgba(0,0,0,0.15); animation:tagFloat 4s ease-in-out infinite;
+        white-space:nowrap;
+        z-index:10;
+        backdrop-filter:blur(10px);
+        border:1px solid rgba(255,255,255,0.2);
+    }
+    @keyframes tagFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-10px) rotate(1deg)} }
+    .tag-gen  { background:rgba(240,253,244,0.9); color:#15803d; top:-10px; left:-20px; animation-delay:0s; }
+    .tag-pdf  { background:rgba(255,255,255,0.9); color:#1e40af; bottom:40px; right:-30px; animation-delay:1s; }
+    .tag-sub  { background:rgba(15,23,42,0.9); color:var(--green); bottom:-15px; left:40px; animation-delay:2s; }
+
     .hero-stats {
-        display:flex; gap:2.5rem; flex-wrap:wrap; justify-content:center;
-        animation:fadeUp 0.7s 0.4s ease both;
-        padding-top:1rem; border-top:1px solid var(--border);
+        display:flex; gap:2rem; flex-wrap:wrap;
+        animation:fadeUp 0.7s 0.5s ease both;
+        padding-top:1.25rem; border-top:1px solid var(--border);
+        justify-content:flex-start;
     }
-    .hero-stat { text-align:center; }
-    .hero-stat strong { display:block; font-size:1.6rem; font-weight:900; color:var(--black); }
-    .hero-stat span { font-size:0.78rem; color:var(--grey); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+    .hero-stat { text-align:left; }
+    .hero-stat strong { display:block; font-size:1.5rem; font-weight:900; color:var(--black); letter-spacing:-0.5px; }
+    .hero-stat span { font-size:0.72rem; color:var(--grey); font-weight:600; text-transform:uppercase; letter-spacing:0.06em; }
 
     /* ── MARQUEE STRIP ────────────────────────────────── */
     .strip { background:var(--black); padding:0.9rem 0; overflow:hidden; }
@@ -297,17 +381,18 @@ $already_logged_in = !empty($_SESSION['org_id']);
     /* ── RESPONSIVE ───────────────────────────────────── */
     @media(min-width:768px) {
         .nav-links a.link { display:block; }
-        .hero-inner { flex-direction:row; justify-content:center; text-align:left; }
+        .hero-inner { grid-template-columns:1fr; }
         .hero-stats { justify-content:flex-start; }
         .hero-ctas  { justify-content:flex-start; }
-        .hero-badge { align-self:flex-start; }
     }
     @media(min-width:1024px) {
+        .hero-inner { grid-template-columns:1fr 1fr; }
         .feat-grid { grid-template-columns:repeat(3,1fr); }
         .steps { grid-template-columns:repeat(4,1fr); }
         .view-cards { grid-template-columns:repeat(4,1fr); }
     }
-    @media(max-width:600px) {
+    @media(max-width:700px) {
+        .hero-float-tag { display:none; }
         .view-cards { grid-template-columns:1fr; }
         .demo-strip { text-align:center; justify-content:center; }
         .cta-sec { margin:2rem 0.5rem 1rem; border-radius:20px; }
@@ -342,35 +427,73 @@ $already_logged_in = !empty($_SESSION['org_id']);
 
 <!-- ═══ HERO ══════════════════════════════════════════════ -->
 <section class="hero">
+    <div class="hero-blob1"></div>
+    <div class="hero-blob2"></div>
     <div class="container">
         <div class="hero-inner">
-            <div style="flex:1; max-width:680px;">
+
+            <!-- LEFT: TEXT -->
+            <div class="hero-left">
                 <div class="hero-badge">
                     <span class="dot"></span>
-                    Now with CBSE Demo Loader — Ready in 60 seconds
+                    CBSE Demo Loader · Full Setup in 60 Seconds
                 </div>
-                <h1 class="hero-title" style="margin:1rem 0 1.25rem;">
-                    School Timetable <br><span class="hl">Automated.</span> Conflict-Free.
+                <h1 class="hero-title">
+                    Stop Making Timetables<br>Manually. Let <span class="hl">TimeGrid</span> Do It.
                 </h1>
                 <p class="hero-sub">
-                    TimeGrid auto-generates 100% conflict-free academic timetables for schools & colleges.
-                    4 powerful viewing modes, daily substitution management, PDF export — all in one system.
+                    AI-powered, 100% conflict-free academic timetable generation for schools & colleges.
+                    Daily substitution, 4 view modes, PDF export — all in one dashboard.
                 </p>
-                <div class="hero-ctas" style="margin:1.75rem 0;">
+
+                <div class="hero-ctas">
                     <?php if ($already_logged_in): ?>
                         <a href="dashboard.php" class="btn btn-green btn-lg"><i class="fas fa-th-large"></i> Go to Dashboard</a>
                     <?php else: ?>
-                        <a href="register.php" class="btn btn-green btn-lg"><i class="fas fa-bolt"></i> Start Free Trial</a>
-                        <a href="https://wa.me/919431426600" class="btn btn-wa btn-lg" target="_blank"><i class="fab fa-whatsapp"></i> Book a Demo</a>
+                        <a href="register.php" class="btn btn-green btn-lg"><i class="fas fa-bolt"></i> Start Free — 14 Days</a>
+                        <a href="https://wa.me/919431426600" class="btn btn-black btn-lg" target="_blank"><i class="fab fa-whatsapp"></i> Book a Demo</a>
                     <?php endif; ?>
                 </div>
+
+                <!-- Trust row -->
+                <div class="hero-trust">
+                    <div class="avatar-stack">
+                        <div class="av" style="background:#3b82f6;">RK</div>
+                        <div class="av" style="background:#8b5cf6;">PS</div>
+                        <div class="av" style="background:#f59e0b;">AM</div>
+                        <div class="av" style="background:#ef4444;">VP</div>
+                        <div class="av" style="background:#22c55e;">+</div>
+                    </div>
+                    <div class="hero-trust-text">
+                        <div class="hero-stars">★★★★★</div>
+                        <strong>Loved by 500+ school admins</strong>
+                        No credit card · Cancel anytime
+                    </div>
+                </div>
+
                 <div class="hero-stats">
                     <div class="hero-stat"><strong>500+</strong><span>Schools</span></div>
                     <div class="hero-stat"><strong>0</strong><span>Conflicts</span></div>
-                    <div class="hero-stat"><strong>60s</strong><span>Setup Time</span></div>
+                    <div class="hero-stat"><strong>60s</strong><span>Setup</span></div>
                     <div class="hero-stat"><strong>14 Days</strong><span>Free Trial</span></div>
                 </div>
             </div>
+
+            <!-- RIGHT: Timetable mockup image -->
+            <div class="hero-visual">
+                <div class="hero-image-container">
+                    <!-- Floating tags -->
+                    <div class="hero-float-tag tag-gen"><i class="fas fa-bolt" style="color:var(--green-dark);"></i> Generated in 3s</div>
+                    <div class="hero-float-tag tag-pdf"><i class="fas fa-file-pdf" style="color:#3b82f6;"></i> Smart PDF Export</div>
+                    <div class="hero-float-tag tag-sub"><i class="fas fa-user-check" style="color:var(--green-dark);"></i> Proxy Assigned</div>
+
+                    <div class="mockup-img-wrap">
+                        <img src="assets/img/hero-mockup.png" alt="TimeGrid App Mockup" class="hero-mockup-img">
+                        <div class="img-overlay-glow"></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
