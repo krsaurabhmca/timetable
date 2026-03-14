@@ -1,44 +1,56 @@
 <?php
 require_once 'config.php';
 
-$error = '';
+$error   = '';
 $success = '';
+$form    = ['org_name' => '', 'full_name' => '', 'email' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
     $org_name = db_escape($_POST['org_name']);
     $full_name = db_escape($_POST['full_name']);
-    $email = db_escape($_POST['email']);
+    $email    = db_escape($_POST['email']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    // Check if email exists
-    $check = db_query("SELECT id FROM users WHERE email = '$email'");
-    if (mysqli_num_rows($check) > 0) {
-        $error = "This email is already registered!";
-    }
-    else {
-        // Create organization
-        $trial_days = 14;
-        $trial_end = date('Y-m-d H:i:s', strtotime("+$trial_days days"));
+    // Preserve values for re-fill on error
+    $form = ['org_name' => $_POST['org_name'], 'full_name' => $_POST['full_name'], 'email' => $_POST['email']];
 
-        mysqli_query($conn, "INSERT INTO organizations (name, email, trial_ends_at) VALUES ('$org_name', '$email', '$trial_end')");
-        $org_id = mysqli_insert_id($conn);
+    // Validate password length
+    if (strlen($_POST['password']) < 6) {
+        $error = "Password must be at least 6 characters.";
+    } else {
+        // Check if email exists — guard against db_query returning false
+        $check = db_query("SELECT id FROM users WHERE email = '$email' LIMIT 1");
+        if ($check === false) {
+            $error = "Database error. Please try again later.";
+        } elseif (mysqli_num_rows($check) > 0) {
+            $error = "An account with this email already exists. <a href='login.php' style='color:#991b1b;font-weight:800;text-decoration:underline;'>Login instead?</a>";
+        } else {
+            // Create organization
+            $trial_end = date('Y-m-d H:i:s', strtotime('+14 days'));
+            mysqli_query($conn, "INSERT INTO organizations (name, email, trial_ends_at) VALUES ('$org_name', '$email', '$trial_end')");
+            $org_id = mysqli_insert_id($conn);
 
-        // Populate default settings
-        $defaults = [
-            ['working_days', 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'],
-            ['periods_per_day', '8'],
-            ['period_duration', '45'],
-            ['break_after_period', '4']
-        ];
-        foreach ($defaults as $d) {
-            mysqli_query($conn, "INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('{$d[0]}', '$org_id', '{$d[1]}')");
+            if (!$org_id) {
+                $error = "Could not create organization. Please try again.";
+            } else {
+                // Populate default settings
+                $defaults = [
+                    ['working_days',    'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'],
+                    ['periods_per_day', '8'],
+                    ['period_duration', '45'],
+                    ['break_after_period', '4']
+                ];
+                foreach ($defaults as $d) {
+                    mysqli_query($conn, "INSERT INTO settings (`key`, `org_id`, `value`) VALUES ('{$d[0]}', '$org_id', '{$d[1]}')");
+                }
+
+                // Create admin user
+                mysqli_query($conn, "INSERT INTO users (org_id, full_name, email, password, role) VALUES ('$org_id', '$full_name', '$email', '$password', 'admin')");
+
+                header("Location: login.php?msg=registered");
+                exit();
+            }
         }
-
-        // Create user
-        mysqli_query($conn, "INSERT INTO users (org_id, full_name, email, password, role) VALUES ('$org_id', '$full_name', '$email', '$password', 'admin')");
-
-        header("Location: login.php?msg=registered");
-        exit();
     }
 }
 ?>
@@ -84,21 +96,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
 
         <?php if ($error): ?>
             <div class="alert alert-danger"><?php echo $error; ?></div>
-        <?php
-endif; ?>
+        <?php endif; ?>
 
         <form method="POST">
             <div class="form-group">
                 <label>Institution / School Name</label>
-                <input type="text" name="org_name" required placeholder="e.g. St. Xavier High School">
+                <input type="text" name="org_name" required placeholder="e.g. St. Xavier High School" value="<?php echo htmlspecialchars($form['org_name']); ?>">
             </div>
             <div class="form-group">
                 <label>Administrator Full Name</label>
-                <input type="text" name="full_name" required placeholder="e.g. Rahul Kumar">
+                <input type="text" name="full_name" required placeholder="e.g. Rahul Kumar" value="<?php echo htmlspecialchars($form['full_name']); ?>">
             </div>
             <div class="form-group">
                 <label>Work Email Address</label>
-                <input type="email" name="email" required placeholder="admin@school.com">
+                <input type="email" name="email" required placeholder="admin@school.com" value="<?php echo htmlspecialchars($form['email']); ?>">
             </div>
             <div class="form-group">
                 <label>Set New Password</label>
